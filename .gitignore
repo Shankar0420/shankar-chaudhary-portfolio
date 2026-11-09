@@ -1,0 +1,33 @@
+
+# Dependencies and build files
+node_modules/
+dist/
+target/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Local database and uploaded files
+backend/data/
+backend/uploads/
+*.mv.db
+*.trace.db
+
+# Private keys and logs
+*.log
+*.pem
+*.key
+*.p12
+*.jks
+
+# System files
+.DS_Store
+
+# All local database and upload folders
+**/data/
+**/uploads/
+*.mv.db
+*.lock.db
+*.trace.db

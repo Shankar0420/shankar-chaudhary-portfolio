@@ -36,6 +36,7 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)) // for H2 console
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                     "/api/public/**",
                     "/api/auth/status",
@@ -68,7 +69,9 @@ public class SecurityConfig {
         String envOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
         java.util.List<String> originPatterns = new java.util.ArrayList<>(List.of(
             "http://localhost:[*]",
-            "http://127.0.0.1:[*]"
+            "http://127.0.0.1:[*]",
+            "https://*.onrender.com",
+            "https://shankar-chaudhary-portfolio-site.onrender.com"
         ));
 
         if (envOrigins != null && !envOrigins.trim().isEmpty()) {

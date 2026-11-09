@@ -54,29 +54,44 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void syncAdminFromEnv() {
-        String envPassword = System.getenv("INITIAL_ADMIN_PASSWORD");
-        if (envPassword == null || envPassword.trim().isEmpty()) {
-            envPassword = System.getenv("ADMIN_PASSWORD");
+        String envPassword = com.shankarchaudhary.portfolio.security.SecurityUtils.cleanEnvValue(System.getenv("INITIAL_ADMIN_PASSWORD"));
+        if (envPassword == null || envPassword.isEmpty()) {
+            envPassword = com.shankarchaudhary.portfolio.security.SecurityUtils.cleanEnvValue(System.getenv("ADMIN_PASSWORD"));
         }
 
-        if (envPassword != null && envPassword.trim().length() >= 8) {
-            java.util.Optional<AdminUser> existing = adminUserRepository.findByMobileNumber(authorizedMobile);
+        String normAuth = com.shankarchaudhary.portfolio.security.SecurityUtils.normalizeMobile(authorizedMobile);
+        if (normAuth == null || normAuth.isEmpty()) {
+            normAuth = "9905340058";
+        }
+
+        if (envPassword != null && envPassword.length() >= 8) {
+            java.util.Optional<AdminUser> existing = adminUserRepository.findByMobileNumber(normAuth);
+            if (existing.isEmpty() && authorizedMobile != null) {
+                existing = adminUserRepository.findByMobileNumber(authorizedMobile);
+            }
+
             if (existing.isPresent()) {
                 AdminUser admin = existing.get();
-                admin.setPasswordHash(passwordEncoder.encode(envPassword.trim()));
+                // Ensure mobile is normalized
+                admin.setMobileNumber(normAuth);
+                if (!passwordEncoder.matches(envPassword, admin.getPasswordHash())) {
+                    admin.setPasswordHash(passwordEncoder.encode(envPassword));
+                    admin.setUpdatedAt(java.time.LocalDateTime.now());
+                    System.out.println(">>> [SECURITY] Admin password updated from environment variable.");
+                }
                 admin.setFailedLoginAttempts(0);
                 admin.setLockoutUntil(null);
-                admin.setUpdatedAt(java.time.LocalDateTime.now());
                 adminUserRepository.save(admin);
-                System.out.println(">>> [SECURITY] Admin password synchronized from environment variable. Lockout reset.");
+                System.out.println(">>> [SECURITY] Admin account synchronized. Lockout and failed attempts cleared.");
             } else {
                 String recoveryKey = com.shankarchaudhary.portfolio.security.SecurityUtils.generateRecoveryKey();
-                AdminUser admin = new AdminUser(authorizedMobile, passwordEncoder.encode(envPassword.trim()));
+                AdminUser admin = new AdminUser(normAuth, passwordEncoder.encode(envPassword));
                 admin.setRecoveryPinHash(passwordEncoder.encode(recoveryKey));
                 admin.setFailedLoginAttempts(0);
                 admin.setLockoutUntil(null);
                 adminUserRepository.save(admin);
-                System.out.println(">>> [SECURITY] Admin account initialized from environment variable for: " + authorizedMobile);
+                System.out.println(">>> [SECURITY] Admin account initialized from environment variable for mobile: " +
+                        com.shankarchaudhary.portfolio.security.SecurityUtils.maskMobile(normAuth));
                 System.out.println(">>> [SECURITY] Emergency Recovery Key: " + recoveryKey);
             }
         }

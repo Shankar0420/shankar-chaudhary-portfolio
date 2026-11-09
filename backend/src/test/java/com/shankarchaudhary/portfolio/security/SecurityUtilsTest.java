@@ -29,4 +29,31 @@ class SecurityUtilsTest {
         }
         assertEquals(1000, generatedKeys.size());
     }
+
+    @Test
+    void testNormalizeMobile() {
+        assertEquals("9905340058", SecurityUtils.normalizeMobile("9905340058"));
+        assertEquals("9905340058", SecurityUtils.normalizeMobile("+919905340058"));
+        assertEquals("9905340058", SecurityUtils.normalizeMobile("+91 9905340058"));
+        assertEquals("9905340058", SecurityUtils.normalizeMobile("\"9905340058\""));
+        assertEquals("9905340058", SecurityUtils.normalizeMobile(" '9905340058' "));
+        assertEquals("9905340058", SecurityUtils.normalizeMobile("+91-9905-340058"));
+    }
+
+    @Test
+    void testMaskMobile() {
+        assertEquals("******0058", SecurityUtils.maskMobile("9905340058"));
+        assertEquals("******0058", SecurityUtils.maskMobile("+919905340058"));
+        assertEquals("[null]", SecurityUtils.maskMobile(null));
+        assertEquals("[null]", SecurityUtils.maskMobile("   "));
+    }
+
+    @Test
+    void testCleanEnvValue() {
+        assertEquals("secretPassword123", SecurityUtils.cleanEnvValue("secretPassword123"));
+        assertEquals("secretPassword123", SecurityUtils.cleanEnvValue("\"secretPassword123\""));
+        assertEquals("secretPassword123", SecurityUtils.cleanEnvValue("'secretPassword123'"));
+        assertEquals("secretPassword123", SecurityUtils.cleanEnvValue("  \"secretPassword123\"  "));
+        assertNull(SecurityUtils.cleanEnvValue(null));
+    }
 }

@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
@@ -145,6 +146,105 @@ class AuthControllerTest {
         );
 
         ResponseEntity<?> response = authController.recoverPassword(request);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void testLogin_Success_WithDirectMobile() {
+        AdminUser existing = new AdminUser(AUTHORIZED_MOBILE, passwordEncoder.encode("Password123"));
+        fakeRepo.save(existing);
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("127.0.0.1");
+
+        Map<String, String> body = Map.of(
+                "mobileNumber", AUTHORIZED_MOBILE,
+                "password", "Password123"
+        );
+
+        ResponseEntity<?> response = authController.login(body, req);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        Map<?, ?> respBody = (Map<?, ?>) response.getBody();
+        assertNotNull(respBody);
+        assertEquals("fake-jwt-token", respBody.get("token"));
+        assertEquals(AUTHORIZED_MOBILE, respBody.get("mobileNumber"));
+    }
+
+    @Test
+    void testLogin_Success_WithCountryCodePrefix() {
+        AdminUser existing = new AdminUser(AUTHORIZED_MOBILE, passwordEncoder.encode("Password123"));
+        fakeRepo.save(existing);
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("127.0.0.1");
+
+        // Mobile formatted with country code e.g. +91 9905340058
+        Map<String, String> body = Map.of(
+                "mobileNumber", "+91 9905340058",
+                "password", "Password123"
+        );
+
+        ResponseEntity<?> response = authController.login(body, req);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        Map<?, ?> respBody = (Map<?, ?>) response.getBody();
+        assertNotNull(respBody);
+        assertEquals("fake-jwt-token", respBody.get("token"));
+    }
+
+    @Test
+    void testLogin_Failure_IncorrectPassword() {
+        AdminUser existing = new AdminUser(AUTHORIZED_MOBILE, passwordEncoder.encode("Password123"));
+        fakeRepo.save(existing);
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("127.0.0.1");
+
+        Map<String, String> body = Map.of(
+                "mobileNumber", AUTHORIZED_MOBILE,
+                "password", "WrongPassword"
+        );
+
+        ResponseEntity<?> response = authController.login(body, req);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+
+        AdminUser updated = fakeRepo.findByMobileNumber(AUTHORIZED_MOBILE).orElseThrow();
+        assertEquals(1, updated.getFailedLoginAttempts());
+    }
+
+    @Test
+    void testLogin_Failure_AccountLockoutAfter5Attempts() {
+        AdminUser existing = new AdminUser(AUTHORIZED_MOBILE, passwordEncoder.encode("Password123"));
+        fakeRepo.save(existing);
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("127.0.0.1");
+
+        for (int i = 1; i <= 4; i++) {
+            ResponseEntity<?> res = authController.login(Map.of("mobileNumber", AUTHORIZED_MOBILE, "password", "Wrong" + i), req);
+            assertEquals(HttpStatus.UNAUTHORIZED, res.getStatusCode());
+        }
+
+        // 5th attempt locks the account
+        ResponseEntity<?> fifthRes = authController.login(Map.of("mobileNumber", AUTHORIZED_MOBILE, "password", "Wrong5"), req);
+        assertEquals(HttpStatus.LOCKED, fifthRes.getStatusCode());
+
+        AdminUser updated = fakeRepo.findByMobileNumber(AUTHORIZED_MOBILE).orElseThrow();
+        assertTrue(updated.isLocked());
+    }
+
+    @Test
+    void testLogin_Failure_UnauthorizedMobile() {
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setRemoteAddr("127.0.0.1");
+
+        Map<String, String> body = Map.of(
+                "mobileNumber", "9876543210",
+                "password", "AnyPassword123"
+        );
+
+        ResponseEntity<?> response = authController.login(body, req);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 

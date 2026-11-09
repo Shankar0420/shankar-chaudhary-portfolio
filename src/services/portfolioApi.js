@@ -24,6 +24,11 @@ export const portfolioApi = {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword })
     }),
+  generateRecoveryKey: (currentPassword) =>
+    apiRequest('/admin/auth/generate-recovery-key', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword })
+    }),
   logout: () => apiRequest('/admin/auth/logout', { method: 'POST' }),
 
   // --- PUBLIC API ---

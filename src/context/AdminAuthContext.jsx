@@ -60,16 +60,17 @@ export function AdminAuthProvider({ children }) {
     throw new Error(res.error || "Login failed");
   };
 
-  const setup = async (mobileNumber, password, recoveryPin) => {
-    const res = await portfolioApi.setupAdmin(mobileNumber, password, recoveryPin);
-    if (res.token) {
-      setAuthToken(res.token, true);
-      setIsAuthenticated(true);
-      setIsInitialized(true);
-      setAdmin({ mobileNumber: res.mobileNumber });
-      return res;
-    }
-    throw new Error(res.error || "Setup failed");
+  const setup = async (mobileNumber, password) => {
+    const res = await portfolioApi.setupAdmin(mobileNumber, password);
+    setIsInitialized(true);
+    return res;
+  };
+
+  const completeAuthWithToken = (token, mobileNumber, remember = true) => {
+    setAuthToken(token, remember);
+    setIsAuthenticated(true);
+    setIsInitialized(true);
+    setAdmin({ mobileNumber });
   };
 
   const logout = async () => {
@@ -93,6 +94,7 @@ export function AdminAuthProvider({ children }) {
         loading,
         login,
         setup,
+        completeAuthWithToken,
         logout,
         refreshStatus: checkStatus
       }}

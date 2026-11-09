@@ -4,6 +4,7 @@ import com.shankarchaudhary.portfolio.entity.AdminUser;
 import com.shankarchaudhary.portfolio.repository.AdminUserRepository;
 import com.shankarchaudhary.portfolio.security.JwtService;
 import com.shankarchaudhary.portfolio.security.RateLimiterService;
+import com.shankarchaudhary.portfolio.security.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -35,9 +36,6 @@ public class AuthController {
     @Value("${portfolio.admin.lockout-minutes:15}")
     private int lockoutMinutes;
 
-    @Value("${portfolio.admin.recovery-key:SHANKAR_ADMIN_RECOVERY_KEY_2026}")
-    private String recoveryKey;
-
     public AuthController(
             AdminUserRepository adminUserRepository,
             PasswordEncoder passwordEncoder,
@@ -63,12 +61,11 @@ public class AuthController {
     public ResponseEntity<?> setupAdmin(@RequestBody Map<String, String> request) {
         if (adminUserRepository.count() > 0) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Admin initialization is already completed. Please log in."));
+                    .body(Map.of("error", "Admin account is already initialized. Please log in."));
         }
 
         String mobileNumber = request.get("mobileNumber");
         String password = request.get("password");
-        String recoveryPin = request.get("recoveryPin");
 
         if (mobileNumber == null || !mobileNumber.trim().equals(authorizedMobile)) {
             return ResponseEntity.badRequest()
@@ -80,10 +77,11 @@ public class AuthController {
                     .body(Map.of("error", "Password must be at least 8 characters long."));
         }
 
+        // Generate a 128-bit cryptographically secure Emergency Recovery Key
+        String generatedRecoveryKey = SecurityUtils.generateRecoveryKey();
+
         AdminUser admin = new AdminUser(authorizedMobile, passwordEncoder.encode(password.trim()));
-        if (recoveryPin != null && !recoveryPin.trim().isEmpty()) {
-            admin.setRecoveryPinHash(passwordEncoder.encode(recoveryPin.trim()));
-        }
+        admin.setRecoveryPinHash(passwordEncoder.encode(generatedRecoveryKey));
         admin.setLastLoginAt(LocalDateTime.now());
         adminUserRepository.save(admin);
 
@@ -91,60 +89,64 @@ public class AuthController {
         Map<String, Object> resp = new HashMap<>();
         resp.put("token", token);
         resp.put("mobileNumber", authorizedMobile);
-        resp.put("message", "Admin account initialized successfully.");
+        resp.put("recoveryKey", generatedRecoveryKey);
+        resp.put("message", "Admin account initialized successfully. Save your Emergency Recovery Key securely.");
         return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletRequest servletRequest) {
         String clientIp = servletRequest.getRemoteAddr();
-
-        if (rateLimiterService.isRateLimited(clientIp)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(Map.of("error", "Too many failed login attempts. Please wait 15 minutes before trying again."));
-        }
-
         String mobileNumber = request.get("mobileNumber");
         String password = request.get("password");
 
+        // 1. Check IP rate limit
+        if (rateLimiterService.isRateLimited(clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("error", "Too many failed attempts. Login locked for " + lockoutMinutes + " minutes."));
+        }
+
+        // 2. Mobile validation
         if (mobileNumber == null || !mobileNumber.trim().equals(authorizedMobile)) {
             rateLimiterService.recordFailedAttempt(clientIp);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Unauthorized mobile number or invalid credentials."));
+                    .body(Map.of("error", "Unauthorized mobile number. Only the registered portfolio owner is allowed."));
         }
 
+        // 3. User existence check
         Optional<AdminUser> adminOpt = adminUserRepository.findByMobileNumber(authorizedMobile);
         if (adminOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED)
-                    .body(Map.of("error", "Admin account not initialized yet. Please complete initial setup.", "needsSetup", true));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Admin account not initialized. Please complete initial setup first."));
         }
 
         AdminUser admin = adminOpt.get();
 
+        // 4. Account-level lockout check
         if (admin.isLocked()) {
             return ResponseEntity.status(HttpStatus.LOCKED)
-                    .body(Map.of("error", "Account is temporarily locked due to repeated failed attempts. Please try again after " + admin.getLockoutUntil()));
+                    .body(Map.of("error", "Account is temporarily locked due to repeated failed attempts. Please use Forgot Password or wait."));
         }
 
-        if (!passwordEncoder.matches(password != null ? password : "", admin.getPasswordHash())) {
+        // 5. Password verification
+        if (password == null || !passwordEncoder.matches(password.trim(), admin.getPasswordHash())) {
+            int attempts = admin.getFailedLoginAttempts() + 1;
+            admin.setFailedLoginAttempts(attempts);
             rateLimiterService.recordFailedAttempt(clientIp);
-            int failed = admin.getFailedLoginAttempts() + 1;
-            admin.setFailedLoginAttempts(failed);
 
-            if (failed >= maxFailedAttempts) {
+            if (attempts >= maxFailedAttempts) {
                 admin.setLockoutUntil(LocalDateTime.now().plusMinutes(lockoutMinutes));
                 adminUserRepository.save(admin);
                 return ResponseEntity.status(HttpStatus.LOCKED)
-                        .body(Map.of("error", "Too many failed attempts. Account has been locked for " + lockoutMinutes + " minutes."));
+                        .body(Map.of("error", "Account locked for " + lockoutMinutes + " minutes due to " + attempts + " failed attempts."));
             }
-
             adminUserRepository.save(admin);
-            int remaining = maxFailedAttempts - failed;
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid password. " + remaining + " attempt(s) remaining before temporary lockout."));
+                    .body(Map.of("error", "Invalid credentials. Attempt " + attempts + " of " + maxFailedAttempts + "."));
         }
 
-        // Login success: reset trackers
+        // 6. Success: reset rate limits and record login
         rateLimiterService.resetAttempts(clientIp);
         admin.setFailedLoginAttempts(0);
         admin.setLockoutUntil(null);
@@ -167,33 +169,57 @@ public class AuthController {
         String newPassword = request.get("newPassword");
 
         if (mobileNumber == null || !mobileNumber.trim().equals(authorizedMobile)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized mobile number"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized mobile number. Only the registered portfolio owner can recover this account."));
+        }
+
+        if (secretOrPin == null || secretOrPin.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Recovery key is required."));
         }
 
         if (newPassword == null || newPassword.trim().length() < 8) {
-            return ResponseEntity.badRequest().body(Map.of("error", "New password must be at least 8 characters long"));
+            return ResponseEntity.badRequest().body(Map.of("error", "New password must be at least 8 characters long."));
         }
 
         Optional<AdminUser> adminOpt = adminUserRepository.findByMobileNumber(authorizedMobile);
         if (adminOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Admin account not found"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Admin account not found. Please complete initial setup first."));
         }
 
         AdminUser admin = adminOpt.get();
-        boolean pinValid = admin.getRecoveryPinHash() != null && passwordEncoder.matches(secretOrPin, admin.getRecoveryPinHash());
-        boolean masterKeyValid = recoveryKey.equals(secretOrPin);
 
-        if (!pinValid && !masterKeyValid) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid recovery key or PIN"));
+        // 1. Verify key against stored BCrypt hash
+        boolean keyValid = admin.getRecoveryPinHash() != null && passwordEncoder.matches(secretOrPin.trim(), admin.getRecoveryPinHash());
+
+        // 2. Or verify against emergency environment variable on deployment host
+        String envEmergencyKey = System.getenv("ADMIN_RECOVERY_KEY");
+        if (envEmergencyKey == null || envEmergencyKey.trim().isEmpty()) {
+            envEmergencyKey = System.getenv("EMERGENCY_RECOVERY_KEY");
+        }
+        boolean envEmergencyValid = envEmergencyKey != null && !envEmergencyKey.trim().isEmpty() && envEmergencyKey.trim().equals(secretOrPin.trim());
+
+        if (!keyValid && !envEmergencyValid) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid Emergency Recovery Key. If you never received one, set EMERGENCY_RECOVERY_KEY or INITIAL_ADMIN_PASSWORD on your server."));
         }
 
+        // Generate a fresh 128-bit Emergency Recovery Key
+        String newRecoveryKey = SecurityUtils.generateRecoveryKey();
+
         admin.setPasswordHash(passwordEncoder.encode(newPassword.trim()));
+        admin.setRecoveryPinHash(passwordEncoder.encode(newRecoveryKey));
         admin.setFailedLoginAttempts(0);
         admin.setLockoutUntil(null);
+        admin.setUpdatedAt(LocalDateTime.now());
         adminUserRepository.save(admin);
 
         String token = jwtService.generateToken(authorizedMobile);
-        return ResponseEntity.ok(Map.of("message", "Password recovered successfully", "token", token));
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("token", token);
+        resp.put("mobileNumber", authorizedMobile);
+        resp.put("recoveryKey", newRecoveryKey);
+        resp.put("message", "Password recovered successfully! Please save your new Emergency Recovery Key.");
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/admin/auth/me")
@@ -202,6 +228,7 @@ public class AuthController {
         resp.put("id", admin.getId());
         resp.put("mobileNumber", admin.getMobileNumber());
         resp.put("lastLoginAt", admin.getLastLoginAt());
+        resp.put("hasRecoveryKey", admin.getRecoveryPinHash() != null && !admin.getRecoveryPinHash().isEmpty());
         return ResponseEntity.ok(resp);
     }
 
@@ -228,9 +255,29 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password updated successfully."));
     }
 
+    @PostMapping("/admin/auth/generate-recovery-key")
+    public ResponseEntity<?> generateNewRecoveryKey(
+            @AuthenticationPrincipal AdminUser admin,
+            @RequestBody Map<String, String> request
+    ) {
+        String currentPassword = request.get("currentPassword");
+        if (!passwordEncoder.matches(currentPassword != null ? currentPassword : "", admin.getPasswordHash())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Current password is required to generate a new recovery key."));
+        }
+
+        String newKey = SecurityUtils.generateRecoveryKey();
+        admin.setRecoveryPinHash(passwordEncoder.encode(newKey));
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminUserRepository.save(admin);
+
+        return ResponseEntity.ok(Map.of(
+                "recoveryKey", newKey,
+                "message", "New Emergency Recovery Key generated. Save it securely."
+        ));
+    }
+
     @PostMapping("/admin/auth/logout")
     public ResponseEntity<?> logout() {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 }
-

@@ -33,7 +33,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## 2. Admin Portal & Authentication
+## 2. Admin Portal, Authentication & Password Recovery
 
 ### Accessing the Admin Portal
 - **Admin URL**: [http://localhost:5173/admin](http://localhost:5173/admin)
@@ -46,16 +46,40 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
   ```
   Any attempt to authenticate with any other mobile number is rejected immediately.
 - **No Public Registration**: Public signups, registrations, or guest accounts are completely disabled at both the API and database levels.
-- **BCrypt Hashing**: Passwords are never stored in plaintext. They are salted and hashed using BCrypt.
+- **BCrypt Hashing**: Passwords and recovery keys are never stored in plaintext. They are salted and hashed using BCrypt.
 - **Stateless JWT**: Sessions use short-lived HMAC-SHA256 JSON Web Tokens with a configurable secret.
 - **Rate Limiting & Lockout**: After **5 consecutive failed login attempts**, the account is temporarily locked for **15 minutes** to prevent brute-force attacks.
-- **One-Time Initial Password Setup**:
-  1. On first boot, visit `http://localhost:5173/admin`.
-  2. The portal detects that no password has been configured yet.
-  3. Enter your registered mobile `9905340058` and set a strong password (minimum 8 characters).
-  4. The system securely prints a **32-character Emergency Recovery Key**. Save this key in a secure location.
-- **Emergency Password Recovery**:
-  If you ever forget your password, click **"Forgot password?"** on the login screen. Enter your mobile `9905340058` and your Emergency Recovery Key to set a new password.
+
+### Root Cause of the Recovery Key Issue & The Fix
+- **Previous Issue**: The previous setup endpoint accepted an optional manual PIN, but did not automatically generate a cryptographically secure Emergency Recovery Key or display an unmissable confirmation screen before navigating to the dashboard. If the user skipped setting a PIN, they were left with no way to reset a forgotten password.
+- **The Permanent Fix**:
+  1. The backend now generates a **128-bit cryptographically secure Emergency Recovery Key** (`REC-XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX`) using `java.security.SecureRandom`.
+  2. The BCrypt hash of the key is stored in the database.
+  3. The frontend displays a dedicated, unmissable **Emergency Recovery Key Screen** with one-click clipboard copy and text file download. The owner must confirm they have saved the key before continuing to the dashboard.
+  4. Each time password recovery is performed, a fresh recovery key is generated and displayed, automatically invalidating any prior key.
+
+### How to Regain Access to Your Deployed Portfolio (Immediate Solution)
+
+If you are currently locked out of your deployed portfolio without a recovery key, **you do not need to delete the database or lose any portfolio content**:
+
+1. **Option A: Deploy-time Environment Variable Reset (Zero Database Loss)**:
+   - In your deployment hosting dashboard (e.g. Railway, Render, Docker, Heroku, VPS, or `.env`), set the environment variable:
+     ```bash
+     INITIAL_ADMIN_PASSWORD=YourNewStrongPassword123!
+     ```
+   - Restart or redeploy the backend container.
+   - On boot, the backend automatically detects this environment variable, synchronizes your admin password with a new BCrypt hash, resets all failed attempts, and clears any active lockouts.
+   - You can then log in immediately at `/admin` with `9905340058` and `YourNewStrongPassword123!`.
+   - Once logged in, visit the **Security** tab in the dashboard and click **"Generate New Recovery Key"** to obtain your new 128-bit key.
+   - Remove `INITIAL_ADMIN_PASSWORD` from your hosting variables afterwards.
+
+2. **Option B: Emergency Recovery Key Variable**:
+   - In your hosting environment variables, set:
+     ```bash
+     ADMIN_RECOVERY_KEY=REC-MY-SECRET-EMERGENCY-PASS
+     ```
+   - Go to `/admin`, click **"Forgot password?"**, enter your mobile `9905340058` and `REC-MY-SECRET-EMERGENCY-PASS`, and choose a new password.
+   - The system resets your password, generates a fresh random key, and displays it for you to save.
 
 ---
 

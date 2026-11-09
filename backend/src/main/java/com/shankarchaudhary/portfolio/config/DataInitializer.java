@@ -16,6 +16,11 @@ public class DataInitializer implements CommandLineRunner {
     private final ProjectRepository projectRepository;
     private final ContactInfoRepository contactInfoRepository;
     private final WebsiteSettingsRepository websiteSettingsRepository;
+    private final AdminUserRepository adminUserRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @org.springframework.beans.factory.annotation.Value("${portfolio.admin.authorized-mobile:9905340058}")
+    private String authorizedMobile;
 
     public DataInitializer(
             ProfileRepository profileRepository,
@@ -23,7 +28,9 @@ public class DataInitializer implements CommandLineRunner {
             SkillRepository skillRepository,
             ProjectRepository projectRepository,
             ContactInfoRepository contactInfoRepository,
-            WebsiteSettingsRepository websiteSettingsRepository
+            WebsiteSettingsRepository websiteSettingsRepository,
+            AdminUserRepository adminUserRepository,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder
     ) {
         this.profileRepository = profileRepository;
         this.educationRepository = educationRepository;
@@ -31,16 +38,48 @@ public class DataInitializer implements CommandLineRunner {
         this.projectRepository = projectRepository;
         this.contactInfoRepository = contactInfoRepository;
         this.websiteSettingsRepository = websiteSettingsRepository;
+        this.adminUserRepository = adminUserRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
+        syncAdminFromEnv();
         seedProfile();
         seedEducation();
         seedSkills();
         seedProjects();
         seedContactInfo();
         seedWebsiteSettings();
+    }
+
+    private void syncAdminFromEnv() {
+        String envPassword = System.getenv("INITIAL_ADMIN_PASSWORD");
+        if (envPassword == null || envPassword.trim().isEmpty()) {
+            envPassword = System.getenv("ADMIN_PASSWORD");
+        }
+
+        if (envPassword != null && envPassword.trim().length() >= 8) {
+            java.util.Optional<AdminUser> existing = adminUserRepository.findByMobileNumber(authorizedMobile);
+            if (existing.isPresent()) {
+                AdminUser admin = existing.get();
+                admin.setPasswordHash(passwordEncoder.encode(envPassword.trim()));
+                admin.setFailedLoginAttempts(0);
+                admin.setLockoutUntil(null);
+                admin.setUpdatedAt(java.time.LocalDateTime.now());
+                adminUserRepository.save(admin);
+                System.out.println(">>> [SECURITY] Admin password synchronized from environment variable. Lockout reset.");
+            } else {
+                String recoveryKey = com.shankarchaudhary.portfolio.security.SecurityUtils.generateRecoveryKey();
+                AdminUser admin = new AdminUser(authorizedMobile, passwordEncoder.encode(envPassword.trim()));
+                admin.setRecoveryPinHash(passwordEncoder.encode(recoveryKey));
+                admin.setFailedLoginAttempts(0);
+                admin.setLockoutUntil(null);
+                adminUserRepository.save(admin);
+                System.out.println(">>> [SECURITY] Admin account initialized from environment variable for: " + authorizedMobile);
+                System.out.println(">>> [SECURITY] Emergency Recovery Key: " + recoveryKey);
+            }
+        }
     }
 
     private void seedProfile() {

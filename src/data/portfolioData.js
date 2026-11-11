@@ -1,18 +1,18 @@
 // ============================================================================
-// CENTRALIZED PORTFOLIO DATA CONFIGURATION
-// Master entry point combining all modular data sources.
-// You can edit individual files in src/data/ or inspect the unified config here.
+// CENTRALIZED PORTFOLIO CONFIGURATION (100% CODE-CONTROLLED)
+// Master configuration entry point for Shankar Kumar Chaudhary
 // ============================================================================
 
 import personalData from "./personalData.js";
-import educationData from "./educationData.js";
+import educationData, { educationList, certificatesList } from "./educationData.js";
 import skillsData, { skillsCategories, learningInterests } from "./skillsData.js";
 import projectsData from "./projectsData.js";
 import contactData from "./contactData.js";
 import socialLinks from "./socialLinks.js";
 
 /**
- * Main consolidated portfolio configuration object.
+ * Consolidated master portfolio configuration.
+ * All public pages read directly from this static data source.
  */
 const portfolioData = {
   personal: personalData,
@@ -25,10 +25,12 @@ const portfolioData = {
 
 export default portfolioData;
 
-// Named exports for modular importing
+// Named modular exports
 export {
   personalData,
   educationData,
+  educationList,
+  certificatesList,
   skillsData,
   skillsCategories,
   learningInterests,
@@ -39,11 +41,10 @@ export {
 
 // ============================================================================
 // HELPER UTILITIES: URL & CONTENT VALIDATION
-// Ensures empty fields, placeholders, or broken URLs never crash the UI.
 // ============================================================================
 
 /**
- * Checks if a string is a real, configured external URL (not empty or a placeholder).
+ * Checks if a string is a real, configured external URL.
  */
 export const isValidUrl = (url) => {
   if (!url || typeof url !== "string") return false;
@@ -53,7 +54,7 @@ export const isValidUrl = (url) => {
 };
 
 /**
- * Checks if a string is a valid configured email address.
+ * Checks if a string is a valid email address.
  */
 export const isValidEmail = (email) => {
   if (!email || typeof email !== "string") return false;
@@ -63,7 +64,7 @@ export const isValidEmail = (email) => {
 };
 
 /**
- * Checks if a string is a valid configured phone number.
+ * Checks if a string is a valid phone number.
  */
 export const isValidPhone = (phone) => {
   if (!phone || typeof phone !== "string") return false;
@@ -81,33 +82,15 @@ export const isConfigured = (val) => {
   return trimmed !== "" && !trimmed.startsWith("//");
 };
 
-// ============================================================================
-// BACKWARD-COMPATIBILITY EXPORTS
-// Kept to ensure zero breakage with legacy imports while components transition.
-// ============================================================================
+// Backward-compatibility aliases
 export const personalInfo = personalData;
 export const resumeConfig = personalData.resume;
 export const aboutData = {
   personalIntroduction: personalData.aboutDescription,
   developerJourney: personalData.developerJourney,
-  educationDetails: educationData.primary || {
-    institution: "// ADD COLLEGE OR UNIVERSITY NAME",
-    courseAndBranch: "// ADD COURSE AND BRANCH",
-    currentYearOrSemester: "// ADD CURRENT YEAR OR SEMESTER",
-    dates: "// ADD EDUCATION DATES",
-    degreeTitle: "Bachelor of Technology (B.Tech)",
-    location: personalData.location || "India"
-  },
-  technicalInterests: personalData.technicalInterests,
+  educationDetails: educationData.primary,
   careerGoals: personalData.careerGoals,
+  technicalInterests: personalData.technicalInterests,
   learningApproach: personalData.learningApproach,
-  timeline: personalData.timeline,
-  certificatesPlaceholderComment: educationData.certificatesPlaceholderComment
-};
-export const contactInfo = {
-  ...contactData,
-  github: socialLinks.github,
-  linkedin: socialLinks.linkedin,
-  instagram: socialLinks.instagram,
-  twitter: socialLinks.twitter
+  progressionTimeline: personalData.timeline
 };

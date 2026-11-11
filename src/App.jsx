@@ -7,24 +7,22 @@ import About from './pages/About';
 import Skills from './pages/Skills';
 import Projects from './pages/Projects';
 import Contact from './pages/Contact';
-import Admin from './pages/Admin';
+import NotFound from './pages/NotFound';
 import { PortfolioProvider, usePortfolio } from './context/PortfolioContext';
-import { AdminAuthProvider } from './context/AdminAuthContext';
 
 function RouteChangeHandler() {
   const { pathname } = useLocation();
   const { personal } = usePortfolio();
-  const name = personal?.fullName || personal?.name || "Developer";
+  const name = personal?.fullName || "Shankar Kumar Chaudhary";
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const titles = {
-      '/': `${name} | Software & Full Stack Developer`,
+      '/': `${name} | Full Stack Developer`,
       '/about': `About Me | ${name}`,
       '/skills': `Skills & Technologies | ${name}`,
       '/projects': `Projects | ${name}`,
-      '/contact': `Contact Me | ${name}`,
-      '/admin': `Admin Dashboard | ${name}`
+      '/contact': `Contact Me | ${name}`
     };
     document.title = titles[pathname] || `${name} | Developer Portfolio`;
   }, [pathname, name]);
@@ -33,13 +31,10 @@ function RouteChangeHandler() {
 }
 
 function MainAppShell() {
-  const { pathname } = useLocation();
-  const isAdminRoute = pathname.startsWith('/admin');
-
   return (
     <div className="min-h-screen flex flex-col bg-[#060813] text-slate-100 selection:bg-purple-500/30 selection:text-cyan-200">
       <RouteChangeHandler />
-      {!isAdminRoute && <Navbar />}
+      <Navbar />
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -47,10 +42,10 @@ function MainAppShell() {
           <Route path="/skills" element={<Skills />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isAdminRoute && <Footer />}
+      <Footer />
     </div>
   );
 }
@@ -59,9 +54,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <PortfolioProvider>
-        <AdminAuthProvider>
-          <MainAppShell />
-        </AdminAuthProvider>
+        <MainAppShell />
       </PortfolioProvider>
     </BrowserRouter>
   );

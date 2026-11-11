@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { Code2, Menu, X, Home, User, Cpu, FolderGit2, Mail, Shield } from 'lucide-react';
+import { Code2, Menu, X, Home, User, Cpu, FolderGit2, Mail } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import ResumeButton from './ResumeButton';
 
@@ -41,7 +41,7 @@ export default function Navbar() {
         <Link
           to="/"
           className="flex items-center gap-3 group focus:outline-none"
-          aria-label={`${personal?.fullName || "Developer"} Home`}
+          aria-label={`${personal?.fullName || "Shankar Kumar Chaudhary"} Home`}
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-cyan-500 p-[1px] shadow-md shadow-purple-900/30">
             <div className="w-full h-full bg-[#070a18] rounded-[11px] flex items-center justify-center group-hover:bg-transparent transition-colors">
@@ -50,10 +50,10 @@ export default function Navbar() {
           </div>
           <div className="flex flex-col">
             <span className="text-base sm:text-lg font-bold tracking-tight text-white group-hover:text-cyan-200 transition-colors">
-              {personal?.fullName || personal?.name}
+              {personal?.fullName || "Shankar Kumar Chaudhary"}
             </span>
             <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
-              {personal?.displayName || personal?.shortName || "Developer"} • Portfolio
+              {personal?.professionalTitle || "Full Stack Developer"} • Portfolio
             </span>
           </div>
         </Link>
@@ -82,16 +82,9 @@ export default function Navbar() {
           })}
         </nav>
 
+        {/* Desktop Action Button */}
         <div className="hidden md:flex items-center gap-3">
           <ResumeButton variant="nav" />
-          <Link
-            to="/admin"
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
-            title="Owner Admin Login"
-            aria-label="Admin Portal"
-          >
-            <Shield className="w-4 h-4 text-purple-400/80 hover:text-cyan-300" />
-          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -108,7 +101,7 @@ export default function Navbar() {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#080c1d]/95 backdrop-blur-2xl border-b border-slate-800 px-4 pt-3 pb-6 space-y-2">
+        <div className="md:hidden bg-[#080c1d]/95 backdrop-blur-2xl border-b border-slate-800 px-4 pt-3 pb-6 space-y-3">
           <nav className="flex flex-col space-y-1.5" aria-label="Mobile Navigation">
             {navLinks.map((item) => {
               const Icon = item.icon;
@@ -130,14 +123,6 @@ export default function Navbar() {
                 </NavLink>
               );
             })}
-
-            <Link
-              to="/admin"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60"
-            >
-              <Shield className="w-4 h-4 text-purple-400" />
-              <span>Admin Portal</span>
-            </Link>
           </nav>
           <div className="pt-3 border-t border-slate-800/80 flex flex-col">
             <ResumeButton variant="nav" className="w-full justify-center py-3" />

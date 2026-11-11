@@ -1,28 +1,27 @@
 // ============================================================================
-// PERSONAL INFORMATION CONFIGURATION
-// Update your personal profile, introduction, hero section, and photos here.
+// PERSONAL INFORMATION CONFIGURATION (CODE-CONTROLLED)
+// Master configuration for Shankar Kumar Chaudhary
 // ============================================================================
 
 const personalData = {
-  // UPDATE YOUR FULL NAME HERE
-  fullName: "Shankar Chaudhary",
+  // FULL NAME
+  fullName: "Shankar Kumar Chaudhary",
 
-  // UPDATE YOUR SHORT NAME OR NICKNAME HERE (used in greetings / mobile headers)
+  // SHORT NAME OR NICKNAME (used in mobile headers and quick greetings)
   shortName: "Shankar",
 
-  // UPDATE YOUR PROFESSIONAL TITLE HERE
-  professionalTitle: "Aspiring Software Developer and Full Stack Developer",
+  // PROFESSIONAL TITLE
+  professionalTitle: "Full Stack Developer",
 
   // ROTATING ROLES (displayed in dynamic hero typing / switching line)
   roles: [
-    "Aspiring Software Developer",
     "Full Stack Developer",
-    "B.Tech Student",
+    "B.Tech Computer Science Student",
+    "Software Developer",
     "Problem Solver"
   ],
 
   // HERO SECTION HEADING & SUBTITLE
-  // Main title displayed in the hero section of the Home page
   heroHeading: "Building Digital Experiences Through Code.",
   heroSubtitle:
     "Crafting modern, accessible web applications and reliable software solutions with React, Spring Boot, Node.js, and clean code.",
@@ -35,17 +34,17 @@ const personalData = {
   supportingText:
     "Focused on writing clean, maintainable code across full-stack web architectures—combining responsive React and modern frontend interfaces with structured Java Spring Boot and Node.js backend systems.",
 
-  // ABOUT ME DETAILED DESCRIPTION (displayed in About page)
+  // ABOUT ME DETAILED DESCRIPTION (displayed on About page)
   aboutDescription:
-    "Hello! I'm Shankar Chaudhary, an aspiring Software Developer and Full Stack Developer currently pursuing my B.Tech degree in India. I am passionate about building modern websites, solving programming problems, and developing practical software solutions that are clean, accessible, and reliable.",
+    "Hello! I'm Shankar Kumar Chaudhary, an aspiring Software Developer and Full Stack Developer currently pursuing my B.Tech degree in Computer Science and Engineering at Galgotias University in India. I am passionate about building modern websites, solving programming problems, and developing practical software solutions that are clean, accessible, and reliable.",
 
-  // DEVELOPER JOURNEY (displayed in About page)
+  // DEVELOPER JOURNEY (displayed on About page)
   developerJourney:
     "My journey in programming started with core languages like C and C++, where I learned how memory, control flow, and algorithmic logic work under the hood. Moving into object-oriented programming with Java and interactive web development with HTML, CSS, and JavaScript, I discovered how rewarding it is to build full-stack applications that solve real everyday needs—such as academic learning management, hospitality portals, and student accommodation directories.",
 
   // DEVELOPER OVERVIEW SUMMARY
   developerOverview:
-    "As a B.Tech student in India, I approach software engineering with curiosity and discipline. From foundational data structures in C, C++, and Java to building end-to-end web applications using React, Tailwind CSS, Spring Boot, Node.js, and relational databases, I enjoy turning ideas into reliable, user-centered software.",
+    "As a B.Tech Computer Science student at Galgotias University, I approach software engineering with curiosity and discipline. From foundational data structures in C, C++, and Java to building end-to-end web applications using React, Tailwind CSS, Spring Boot, Node.js, and relational databases, I enjoy turning ideas into reliable, user-centered software.",
 
   // CURRENT STATUS & AVAILABILITY
   currentStatus: "B.Tech Student • Available for software engineering opportunities",
@@ -54,31 +53,26 @@ const personalData = {
   location: "India",
 
   // EDUCATION SUMMARY FOR BADGES
-  educationSummary: "B.Tech Student",
-  university: "// ADD UNIVERSITY NAME",
+  educationSummary: "B.Tech in Computer Science & Engineering • Galgotias University",
+  university: "Galgotias University",
+  degree: "Bachelor of Technology",
+  branch: "Computer Science and Engineering",
+  semester: "3rd Semester",
+  academicYear: "Second Year",
 
-  // REPLACE YOUR PROFILE PHOTO HERE
-  // 1. Upload your photo to: public/assets/images/profile/profile-photo.jpg (or profile.jpg)
-  // 2. Set profilePhotoUploaded to true once your file is placed in that folder
+  // PROFILE PHOTO
   profileImage: "/assets/images/profile/profile-photo.jpg",
-  profileImageUploaded: false,
-  profileImageComment: "// REPLACE YOUR PROFILE PHOTO HERE (public/assets/images/profile/profile-photo.jpg)",
+  profileImageUploaded: true,
 
   // ABOUT PAGE PHOTO
-  // 1. Upload your About photo to: public/assets/images/profile/about-photo.jpg
-  // 2. Set aboutImageUploaded to true once your file is placed in that folder
   aboutImage: "/assets/images/profile/about-photo.jpg",
-  aboutImageUploaded: false,
-  aboutImageComment: "// UPLOAD YOUR ABOUT PAGE PHOTO HERE (public/assets/images/profile/about-photo.jpg)",
+  aboutImageUploaded: true,
 
   // RESUME CONFIGURATION
-  // 1. Place your PDF file in: public/assets/documents/resume/Shankar_Chaudhary_Resume.pdf
-  // 2. Change isUploaded to true to enable the download button across the site
   resume: {
     filePath: "/assets/documents/resume/Shankar_Chaudhary_Resume.pdf",
     fileName: "Shankar_Chaudhary_Resume.pdf",
-    isUploaded: false,
-    placeholderComment: "// UPLOAD YOUR RESUME PDF HERE (public/assets/documents/resume/)"
+    isUploaded: true
   },
 
   // FOOTER COPYRIGHT & BRAND NOTE
@@ -155,7 +149,7 @@ const personalData = {
       title: "Backend Systems & Relational Databases",
       subtitle: "Java Spring Boot, Node.js, Express.js, MySQL & MariaDB",
       description:
-        "Expanded into full-stack application development by building Cafe and Hotel Haven and the Smart Learning Management System (LMS) with persistent database integration."
+        "Expanded into full-stack application development by building Cafe and Hotel Haven and the Galgotias LMS platform with persistent database integration."
     },
     {
       phase: "Present & Ongoing",
@@ -167,18 +161,15 @@ const personalData = {
   ],
 
   // Backward compatibility aliases
-  name: "Shankar Chaudhary",
-  profession: "Aspiring Software Developer and Full Stack Developer",
+  name: "Shankar Kumar Chaudhary",
+  profession: "Full Stack Developer",
   shortIntro:
     "I am a passionate developer who enjoys building modern websites, solving programming problems, and developing practical software solutions. I continuously explore new technologies and improve my development skills.",
   profilePhoto: "/assets/images/profile/profile-photo.jpg",
-  profilePhotoUploaded: false,
-  profilePhotoComment: "// REPLACE YOUR PROFILE PHOTO HERE",
+  profilePhotoUploaded: true,
   aboutPhoto: "/assets/images/profile/about-photo.jpg",
-  aboutPhotoUploaded: false,
-  aboutPhotoComment: "// UPLOAD YOUR ABOUT PAGE PHOTO HERE",
-  education: "B.Tech Student"
+  aboutPhotoUploaded: true,
+  education: "B.Tech in Computer Science and Engineering"
 };
 
 export default personalData;
-

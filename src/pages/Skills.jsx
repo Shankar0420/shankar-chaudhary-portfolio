@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Sparkles, CheckCircle2, Layers } from 'lucide-react';
+import { Cpu, Layers, Sparkles, CheckCircle2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export default function Skills() {
@@ -36,7 +36,7 @@ export default function Skills() {
           Technical Stack & Development Tools
         </h1>
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-          Centralized in <code className="font-mono text-cyan-300">src/data/skillsData.js</code>. Add, edit, or remove skills in that file to automatically update this page without modifying component code.
+          A structured overview of the programming languages, full-stack frameworks, databases, developer tools, and modern workflows I use to build scalable web applications.
         </p>
 
         {/* Category Filter Pills */}
@@ -98,35 +98,44 @@ export default function Skills() {
                 >
                   <div className="space-y-3.5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-slate-950/90 border border-slate-800 p-2.5 flex items-center justify-center">
-                        <img
-                          src={tech.icon || tech.iconUrl}
-                          alt={`${tech.name} icon`}
-                          className="w-full h-full object-contain"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                      <div className="w-12 h-12 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-2.5 shrink-0">
+                        {tech.icon ? (
+                          <img
+                            src={tech.icon}
+                            alt={tech.name}
+                            className="w-full h-full object-contain"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="font-bold font-mono text-sm text-cyan-300">
+                            {tech.name.substring(0, 2)}
+                          </span>
+                        )}
                       </div>
-                      <span className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-slate-900 text-slate-300 border border-slate-800">
-                        {tech.category}
-                      </span>
+                      {tech.featured && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                          <Sparkles className="w-2.5 h-2.5 text-cyan-300" />
+                          Featured
+                        </span>
+                      )}
                     </div>
 
                     <div>
-                      <h3 className="text-base font-bold text-white">{tech.name}</h3>
-                      {tech.description && (
-                        <p className="text-xs text-slate-300 leading-relaxed mt-1.5">
-                          {tech.description}
-                        </p>
-                      )}
+                      <h3 className="text-base font-bold text-white tracking-tight">
+                        {tech.name}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                        {tech.description}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-800/60 flex items-center gap-1.5 text-[11px] font-mono text-cyan-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                    <span>Practical Project Stack</span>
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-500">
+                    <span>{category.title}</span>
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      Active
+                    </span>
                   </div>
                 </div>
               ))}
@@ -135,30 +144,29 @@ export default function Skills() {
         ))}
       </div>
 
-      {/* Learning & Development Interests */}
+      {/* Ongoing Learning Focus */}
       {learningInterests.length > 0 && (
-        <section className="glass-card rounded-3xl p-6 sm:p-10 border border-slate-800/90 space-y-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-purple-300">
-              <Sparkles className="w-4 h-4 text-cyan-300" />
-              <span>Continuous Improvement</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Learning & Development Interests
+        <section className="space-y-6 pt-4 border-t border-slate-800/80">
+          <div>
+            <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+              Technical Growth
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">
+              Current Engineering Focus Areas
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-              Areas where I actively invest study time to build stronger software engineering foundations.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {learningInterests.map((item) => (
+            {learningInterests.map((item, idx) => (
               <div
-                key={item.title}
-                className="p-5 rounded-2xl bg-slate-950/75 border border-slate-800/90 space-y-2"
+                key={idx}
+                className="glass-card rounded-2xl p-6 border border-slate-800/90 space-y-2"
               >
-                <h3 className="text-base font-bold text-white">{item.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <div className="flex items-center gap-2 text-purple-300">
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <h3 className="text-base font-bold text-white">{item.title}</h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-6">
                   {item.description}
                 </p>
               </div>

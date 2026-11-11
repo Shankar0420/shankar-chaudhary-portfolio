@@ -1,55 +1,33 @@
 // ============================================================================
-// SOCIAL MEDIA LINKS CONFIGURATION
-// Add or edit your public social profiles here.
-// Empty strings ("") or disabled profiles (visible: false) are automatically
-// hidden across the Navbar, Footer, and Contact pages.
+// SOCIAL LINKS CONFIGURATION (CODE-CONTROLLED)
+// Public verified profiles for Shankar Kumar Chaudhary
 // ============================================================================
 
 const socialLinks = {
-  // UPDATE YOUR GITHUB PROFILE LINK HERE
-  github: "// ADD YOUR GITHUB PROFILE LINK HERE",
-
-  // UPDATE YOUR LINKEDIN PROFILE LINK HERE
-  linkedin: "// ADD YOUR LINKEDIN PROFILE LINK HERE",
-
-  // UPDATE YOUR INSTAGRAM PROFILE LINK HERE (Optional - leave empty to hide)
+  github: "https://github.com/Shankar0420",
+  linkedin: "https://www.linkedin.com/in/shankar-kumar-chaudhary-a8191536b/",
+  portfolio: "https://shankar-chaudhary-portfolio-site.onrender.com",
   instagram: "",
-
-  // UPDATE YOUR TWITTER / X PROFILE LINK HERE (Optional - leave empty to hide)
   twitter: "",
 
-  // ARRAY OF CONFIGURED SOCIAL PROFILES (Used for dynamic listing)
   profiles: [
     {
       id: "github",
       name: "GitHub",
-      url: "// ADD YOUR GITHUB PROFILE LINK HERE",
+      url: "https://github.com/Shankar0420",
+      handle: "@Shankar0420",
       icon: "Github",
       visible: true
     },
     {
       id: "linkedin",
       name: "LinkedIn",
-      url: "// ADD YOUR LINKEDIN PROFILE LINK HERE",
+      url: "https://www.linkedin.com/in/shankar-kumar-chaudhary-a8191536b/",
+      handle: "Shankar Kumar Chaudhary",
       icon: "Linkedin",
       visible: true
-    },
-    {
-      id: "instagram",
-      name: "Instagram",
-      url: "",
-      icon: "Instagram",
-      visible: false
-    },
-    {
-      id: "twitter",
-      name: "Twitter",
-      url: "",
-      icon: "Twitter",
-      visible: false
     }
   ]
 };
 
 export default socialLinks;
-
